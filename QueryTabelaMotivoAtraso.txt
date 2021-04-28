@@ -1,0 +1,48 @@
+create or replace table Marketplace.TabelaMotivoAtraso as (
+        select distinct a.*
+            ,b.shipping_limit_date
+            ,b.price
+            ,b.freight_value
+            ,c.order_status
+            ,c.order_purchase_timestamp
+            ,c.order_approved_at
+            ,c.order_delivered_carrier_date
+            ,c.order_delivered_customer_date
+            ,c.order_estimated_delivery_date
+            ,e.review_score
+            ,e.review_comment_title
+            ,e.review_comment_message
+            ,f.customer_zip_code_prefix
+            ,f.customer_city
+            ,f.customer_state
+            ,g.seller_zip_code_prefix
+            ,g.seller_city
+            ,g.seller_state
+            ,h.payment_sequential
+            ,h.payment_type
+            ,h.payment_value
+            ,timestamp_diff(c.order_approved_at,c.order_purchase_timestamp, day) as Dif_DtCompra_AprovPedido
+            ,timestamp_diff(c.order_delivered_carrier_date,c.order_approved_at, day) as Dif_ApvPag_EntTrasnp
+            ,timestamp_diff(c.order_delivered_customer_date,c.order_delivered_carrier_date, day) as Dif_Transp_Entcli
+            ,case when c.order_delivered_customer_date < c.order_estimated_delivery_date then 1 else 0 end as Ent_Antes_Estim
+            ,case when c.order_delivered_customer_date > c.order_estimated_delivery_date then 1 else 0 end as Ent_Atrasada
+            ,case when  REGEXP_CONTAINS(upper(e.review_comment_message), r'VENDEDOR') then 1 else 0 end as flg_vend
+            ,case when e.review_score is not null then 1 else 0 end as qtd_comentarios
+            ,extract(year from c.order_purchase_timestamp) as AnoPedido
+            ,case when char_length(concat(extract(year from c.order_purchase_timestamp),extract(month from c.order_purchase_timestamp))) <= 5 then
+                    concat(extract(year from c.order_purchase_timestamp),"0",extract(month from c.order_purchase_timestamp))
+                    else concat(extract(year from c.order_purchase_timestamp),extract(month from c.order_purchase_timestamp)) end as AnomesPedido
+        from Marketplace.olist_products a
+        left join Marketplace.olist_order_items b
+        on a.product_id = b.product_id
+        left join Marketplace.olist_orders c
+        on b.order_id = c.order_id
+        left join Marketplace.olist_order_reviews e
+        on c.order_id = e.order_id
+        left join Marketplace.olist_customers f
+        on c.customer_id = f.customer_id
+        left join Marketplace.olist_sellers g
+        on b.seller_id = g.seller_id
+        left join Marketplace.olist_order_payments h
+        on c.order_id = h.order_id
+);
