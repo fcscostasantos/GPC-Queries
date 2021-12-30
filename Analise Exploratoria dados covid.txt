@@ -1,0 +1,42 @@
+-- PREPARA BASE DE DADOS COVID NACIONAL
+
+create or replace table Covid.dados_covid_nacional_tratado AS (
+  select case when _regiao_ is null then "ND" else replace(_regiao_,"'","") end as Regiao
+        ,case when _estado_ is null then "ND" else replace(_estado_,"'","") end as Estado
+        ,case when _municipio_ is null then "ND" else replace(_municipio_,"'","") end as Municipio
+        ,case when _coduf_ is null then "ND" else replace(_coduf_,"'","") end as CodUF
+        ,_codmun_ as CodMunicipio
+        ,_codRegiaoSaude_ as codRegiaoSaude
+        ,case when _nomeRegiaoSaude_ is null then "ND" else replace(_nomeRegiaoSaude_,"'","")	end as nomeRegiaoSaude
+        ,FORMAT_DATE("%d/%m/%Y", _data_) as Data
+        ,case when CHAR_LENGTH(concat(extract(year from _data_),extract(month from _data_))) <= 5 then concat(extract(year from _data_),"0",extract(month from _data_))
+          else concat(extract(year from _data_),extract(month from _data_)) end as AnoMes
+        ,_semanaEpi_ as SemanaEpidemia
+        ,replace(_populacaoTCU2019_,"'", "") as Populacao
+        ,_casosAcumulado_ as casosAcumulado
+        ,_casosNovos_ as casosNovos
+        ,_obitosAcumulado_ as obitosAcumulado
+        ,_obitosNovos_ as obitosNovos
+        ,_Recuperadosnovos_ as Recuperadosnovos
+        ,_emAcompanhamentoNovos_ as emAcompanhamentoNovos
+        ,_interior_metropolitana_ as interior_metropolitana
+  from Covid.dados_covid_nacional
+);
+
+select distinct 	Municipio from Covid.dados_covid_nacional_tratado where Municipio is null;
+
+-- PREPARA BASE DE DADOS COVID GLOBAL
+
+create or replace table Covid.dados_covid_global_tratado AS (
+  select FORMAT_DATE("%d/%m/%Y", Date_reported) as  Data_Relatorio
+        ,case when CHAR_LENGTH(concat(extract(year from Date_reported),extract(month from Date_reported))) <= 5 then concat(extract(year from Date_reported),"0",extract(month from Date_reported))
+          else concat(extract(year from Date_reported),extract(month from Date_reported)) end as AnoMes
+       ,case when _Country_code =" " then "ND" else _Country_code end as CodPaises
+       ,case when _Country = " " then "ND" else _Country end as Paises
+       ,case when _WHO_region = " " then "ND" else _WHO_region end as Regiao
+       ,_New_cases as Novos_Casos
+       ,_Cumulative_cases as Casos_acumulados
+       ,_New_deaths as Novas_mortes
+       ,_Cumulative_deaths as Mortes_acumuladas
+  from Covid.dados_covid_global
+);

@@ -1,0 +1,29 @@
+SELECT column_name
+      ,case when column_name = "CodPaises" then (select count(*) from Covid.dados_covid_global_tratado where CodPaises != "ND") 
+            when column_name = "Paises" then (select count(*) from Covid.dados_covid_global_tratado where 	Paises != "ND" or Paises != "Other")
+            when column_name = "Regiao" then (select count(*) from Covid.dados_covid_global_tratado where 	Regiao != "ND" or Regiao != "Other")
+            else 0 end as QtdeDadosValidos
+            
+      ,case when column_name = "CodPaises" then (select count(*) from Covid.dados_covid_global_tratado where CodPaises = "ND")
+            when column_name = "Paises" then (select count(*) from Covid.dados_covid_global_tratado where Paises = "ND" or Paises = "Other")
+            when column_name = "Regiao" then (select count(*) from Covid.dados_covid_global_tratado where Regiao = "ND" or Regiao = "Other")
+            else 0 end as QtdeDadosInvalidos
+            
+      ,case when column_name = "CodPaises" 
+            then round((select count(*) from Covid.dados_covid_global_tratado where CodPaises = "ND") / 
+                 (select count(*) from Covid.dados_covid_global_tratado where CodPaises != "ND") ,4)
+                 
+            when column_name = "Paises" 
+            then round((select count(*) from Covid.dados_covid_global_tratado where Paises = "ND" or Paises = "Other") / 
+                 (select count(*) from Covid.dados_covid_global_tratado where Paises != "ND" or Paises != "Other") ,4)
+                 
+            when column_name = "Regiao" 
+            then round((select count(*) from Covid.dados_covid_global_tratado where Regiao = "ND" or Regiao = "Other") / 
+                 (select count(*) from Covid.dados_covid_global_tratado where Regiao != "ND" or Regiao != "Other") ,4)
+            else 0 end as PerclDadosInvalidos
+      
+FROM
+ Covid.INFORMATION_SCHEMA.COLUMNS
+WHERE
+ table_name="dados_covid_global_tratado";
+ 
